@@ -1,4 +1,4 @@
-package ark_ssh
+package arkssh
 
 import (
 	"errors"
