@@ -1,0 +1,12 @@
+Value Required port_name ((?:[^MS]\S+/\d+/\d+|\S+-\d+-\d+|(?:[^MS]\S+/\d+)|Eth-Trunk\d+|Bridge-Aggregation\d+))
+Value Required physical_status (Up|UP|DOWN|ADM|up|down|adm|\*down|admin down|monitoring)
+Value protocol_status (Up|UP|DOWN|ADM|up|down)
+
+
+Start
+ ^disp interface\s*$$ -> port_name
+
+port_name
+ ^${port_name} current state : Administratively ${physical_status}
+ ^${port_name} current state : ${physical_status}
+ ^Line protocol current state : ${protocol_status} -> Record

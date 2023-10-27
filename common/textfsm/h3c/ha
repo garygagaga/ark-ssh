@@ -1,0 +1,6 @@
+Value stack (.*\d\s+Standby|\d\s+On\s+Standby|STACK Software)
+Value mlag (Dfs-Group ID|effective role: Secondary)
+
+Start
+ ^.+${stack}\s+\d+
+ ^.*${mlag}

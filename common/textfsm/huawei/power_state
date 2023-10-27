@@ -1,0 +1,21 @@
+Value Filldown slot_id (\d)
+Value power_1 (Normal|Absent|Supply|NotSupply|Sleep)
+Value power_2 (Normal|Absent|Supply|NotSupply|Sleep)
+
+
+Start
+ ^\s+Slot\s+PowerID\s+Online -> HUAWEI5731
+ ^Slot PowerNo Present Mode State -> HUAWEI6800
+
+
+#disp power
+HUAWEI5731
+ ^\s+${slot_id}\s+PWR1\s+\S+\s+\S+\s+${power_1}\s+\S+
+ ^\s+${slot_id}\s+PWR2\s+\S+\s+\S+\s+${power_2}\s+\S+
+
+#disp device power
+HUAWEI6800
+ ^\d\s+PWR1\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+ -> Continue.Record
+ ^${slot_id}\s+PWR1\s+\S+\s+\S+\s+${power_1}\s+\S+\s+\S+\s+\S+\s+\S+
+ ^\s+PWR2\s+\S+\s+\S+\s+${power_2}\s+\S+\s+\S+\s+\S+\s+\S+
+

@@ -1,0 +1,13 @@
+Value volt_1 (\d+\.\d+?)
+Value volt_2 (\d+\.\d+?)
+
+Start
+ ^Power supply details -> Huawei1
+
+Huawei1
+ ^1\s+PWR1\s+AC\s+\s+${volt_1}\s+\S+
+ ^\s+PWR2\s+AC\s+${volt_2}\s+\S+ -> Record
+
+
+#Huawei support 6800,6857,8850E,6865,6855
+#ps: partial version of 6855 cant get attribute

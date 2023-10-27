@@ -1,0 +1,8 @@
+Value role (S|T|I|M|MR|Mir)
+
+Start
+ ^<.*${role}\.TGY
+ ^<.*${role}C\.TGY
+ ^<.*-${role}_.+TGY
+ ^<.*${role}\.HeY
+ ^<.*${role}C\.HeY

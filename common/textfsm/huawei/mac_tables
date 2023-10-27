@@ -1,0 +1,9 @@
+Value Required mac_address ([0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4})
+Value vlan (\d+)
+Value port_name (\S+\d+)
+
+Start
+ ^disp mac-address
+ ^${mac_address}\s+${vlan}/\S+/\S+\s+${port_name}.+ -> Record
+ ^${mac_address}\s+${vlan}/\S+\s+${port_name}.+ -> Record
+ ^${mac_address}\s+${vlan}\s+\s+${port_name}.+ -> Record

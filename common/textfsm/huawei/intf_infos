@@ -1,0 +1,21 @@
+Value Required port_name ((?:[^MS]\S+/\d+/\d+|\S+-\d+-\d+|(?:[^MS]\S+/\d+)|Eth-Trunk\d+|Bridge-Aggregation\d+))
+Value agg_port_id (\d+)
+Value description (.+)
+Value be_long_to_agg (\d+)
+Value port_type (trunk|access)
+Value access_vlan (\d+)
+Value pvid (\d+)
+Value not_allow (\d+)
+Value List allow_tmp (.+)
+
+Start
+  ^# -> Continue.Record
+  ^interface ${port_name} -> Continue
+  ^interface Eth-Trunk${agg_port_id}
+  ^\s+description ${description}
+  ^\s+eth-trunk ${be_long_to_agg}
+  ^\s+port link-type ${port_type}
+  ^\s+port default vlan ${access_vlan}
+  ^\s+port trunk pvid vlan ${pvid}
+  ^\s+undo port trunk allow-pass vlan ${not_allow}
+  ^\s+port trunk allow-pass vlan ${allow_tmp}

@@ -1,0 +1,22 @@
+Value slot_id (\d)
+Value power_1 (Normal|normal|Absent|absent|Supply|NotSupply|Sleep)
+Value power_2 (Normal|normal|Absent|absent|Supply|NotSupply|Sleep)
+
+
+Start
+ ^\s+Slot\s+\d: -> H3CSwitch
+ ^\s+Index\s+Status -> H3CRouter
+
+#disp power
+H3CSwitch
+ ^\s+Slot\s+\d: -> Continue.Record
+ ^\s+Slot\s+${slot_id}:
+ ^\s+1\s+${power_1}\s+\S+\s+\S+\s+\S+\s+\S+
+ ^\s+2\s+${power_2}\s+\S+\s+\S+\s+\S+\s+\S+
+
+
+#disp power-supply
+H3CRouter
+ ^\s+Index\s+Status -> Continue.Record
+ ^\s+PWR1\s+${power_1}
+ ^\s+PWR2\s+${power_2}
