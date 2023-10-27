@@ -1,4 +1,4 @@
-module ark-ssh
+module github.com/garygagaga/ark-ssh
 
 go 1.20
 
