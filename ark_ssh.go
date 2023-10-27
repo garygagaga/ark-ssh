@@ -8,13 +8,8 @@ import (
 	"sync"
 
 	"github.com/sirikothe/gotextfsm"
-	"go.uber.org/zap"
 	"golang.org/x/crypto/ssh"
 )
-
-func init() {
-	InitLogger()
-}
 
 const (
 	HUAWEI       = "huawei"
@@ -118,7 +113,8 @@ func (d *Device) GetBrand() (string, error) {
 	}
 	brand := sshSession.GetSSHBrand()
 	d.Brand = brand
-	zap.S().Infof("获取设备brand成功,ipPort:%s,brand:%s", ipPort, brand)
+	LogDebug("获取设备brand成功,ipPort:%s,brand:%s", ipPort, brand)
+
 	return brand, nil
 }
 
@@ -205,7 +201,7 @@ func (d *Device) RunCmdWithBrand(timeOut int) error {
 			one.Status = "采集配置为空"
 		case !ok && one.RES != "":
 			one.Status = "配置采集不完整"
-			zap.S().Debug("配置采集不完整", d.IP)
+			LogDebug("配置采集不完整", d.IP)
 		default:
 			one.Status = "读回显遇到未知错误"
 		}
@@ -228,9 +224,9 @@ func (d *Device) RunCmdWithBrand(timeOut int) error {
 			tempName := d.TextFsmTemplates[i]
 			res, err := TextFsmParse(d.Brand, rawRes, tempName)
 			if err != nil {
-				zap.S().Debugf("TextFsm解析失败%v,采集的状态为%s,IP:%s", err, d.SendStatus, d.IP)
+				LogDebug("TextFsm解析失败%v,采集的状态为%s,IP:%s", err, d.SendStatus, d.IP)
 			}
-			zap.S().Debug("解析成功")
+			LogDebug("解析成功")
 			//是否需要将textfsm转换后的内容解压，默认不解压
 			if d.UnzipTextFsmResults && len(res) == 1 {
 				for k, v := range res[0] {
@@ -303,8 +299,8 @@ func BulkRunCmd(devices []Device, timeOut int) error {
 			defer wg.Done()
 			err := d.RunCmdWithBrand(timeOut)
 			//elapsed := time.Since(start)
-			//zap.S().Infof("运行时间为%s\n", elapsed)
-			//zap.S().Infof("%s----%s-----%s,运行时间为%s\n", d.IP, d.Brand, d.ResultMap, elapsed)
+			//LogDebug("运行时间为%s\n", elapsed)
+			//LogDebug("%s----%s-----%s,运行时间为%s\n", d.IP, d.Brand, d.ResultMap, elapsed)
 			if err != nil {
 				LogDebug("异常:%s", err.Error())
 			}
