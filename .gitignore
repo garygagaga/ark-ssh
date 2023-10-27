@@ -1,0 +1,6 @@
+#git rm -rf --cached .idea
+# Logs
+logs
+*.log
+
+.idea/*
