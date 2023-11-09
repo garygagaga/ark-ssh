@@ -45,16 +45,17 @@ type Device struct {
 	ProdTestSimple bool   `bson:"prod_test_simple,omitempty" json:"prod_test_simple,omitempty"` //是否为生产环境测试用例使用设备.
 
 	// 推送命令相关
-	Cmds                []string               `bson:"cmds,omitempty" json:"cmds,omitempty"`
-	Timeout             int                    `bson:"timeout,omitempty" json:"timeout,omitempty"`
-	SendStatus          string                 `bson:"send_status,omitempty" json:"send_status,omitempty"` //命令推送的状态，成功为success
-	RawResult           string                 `bson:"raw_result,omitempty" json:"raw_result,omitempty"`   //原始的回显
-	MapResult           map[string]OneCMDRes   `bson:"map_result,omitempty" json:"map_result,omitempty"`   //origin_ssh使用
-	ResultMap           map[string]string      `bson:"result,omitempty" json:"result,omitempty"`           //scrapli_ssh使用，将每行命令为key，结果为value写入map
-	Detect              string                 `bson:"detect,omitempty" json:"detect,omitempty"`
-	UnzipTextFsmResults bool                   `bson:"unzip_text_fsm_results,omitempty" json:"unzip_text_fsm_results,omitempty"` //是否解压TextFsmResults结果
-	TextFsmTemplates    []string               `bson:"textfsm_templates,omitempty" json:"textfsm_templates,omitempty"`
-	TextFsmResults      map[string]interface{} `bson:"textfsm_results,omitempty" json:"textfsm_results,omitempty"`
+	Cmds                     []string               `bson:"cmds,omitempty" json:"cmds,omitempty"`
+	Timeout                  int                    `bson:"timeout,omitempty" json:"timeout,omitempty"`
+	SendStatus               string                 `bson:"send_status,omitempty" json:"send_status,omitempty"` //命令推送的状态，成功为success
+	RawResult                string                 `bson:"raw_result,omitempty" json:"raw_result,omitempty"`   //原始的回显
+	MapResult                map[string]OneCMDRes   `bson:"map_result,omitempty" json:"map_result,omitempty"`   //origin_ssh使用
+	ResultMap                map[string]string      `bson:"result,omitempty" json:"result,omitempty"`           //scrapli_ssh使用，将每行命令为key，结果为value写入map
+	Detect                   string                 `bson:"detect,omitempty" json:"detect,omitempty"`
+	UnzipTextFsmResults      bool                   `bson:"unzip_text_fsm_results,omitempty" json:"unzip_text_fsm_results,omitempty"` //是否解压TextFsmResults结果
+	TextFsmTemplateFilenames []string               `bson:"textfsm_templates,omitempty" json:"textfsm_templates,omitempty"`
+	TextFsmContent           string                 `bson:"textfsm_content,omitempty" json:"textfsm_content,omitempty"`
+	TextFsmResults           map[string]interface{} `bson:"textfsm_results,omitempty" json:"textfsm_results,omitempty"`
 	// 登录验证相关
 	LoginSuccessTimes       int `bson:"login_success_times,omitempty" json:"login_success_times,omitempty"`     //登录成功次数
 	LoginTotalTimes         int `bson:"login_total_times,omitempty" json:"login_total_times"`                   //登录总次数
@@ -219,15 +220,15 @@ func (d *Device) RunCmdWithBrand(timeOut int) error {
 	d.MapResult = mapRes
 	//如果textfsm字段不为空则将原始的result进行解析
 	parserRes := make(map[string]interface{})
-	if len(d.TextFsmTemplates) > 0 {
-		for i := range d.TextFsmTemplates {
-			tempName := d.TextFsmTemplates[i]
-			res, err := TextFsmParse(d.Brand, rawRes, tempName)
+	if len(d.TextFsmTemplateFilenames) > 0 {
+		for i := range d.TextFsmTemplateFilenames {
+			tempName := d.TextFsmTemplateFilenames[i]
+			res, err := TextFsmParseViaTemplateFile(d.Brand, rawRes, tempName)
 			if err != nil {
 				LogDebug("TextFsm解析失败%v,采集的状态为%s,IP:%s", err, d.SendStatus, d.IP)
 			}
 			LogDebug("解析成功")
-			//是否需要将textfsm转换后的内容解压，默认不解压
+			//是否需要将textfsm转换后的内容解压，默认不解压,(该项用于textfsm模板中只解析一个元素的情况下)
 			if d.UnzipTextFsmResults && len(res) == 1 {
 				for k, v := range res[0] {
 					parserRes[k] = v
@@ -235,6 +236,21 @@ func (d *Device) RunCmdWithBrand(timeOut int) error {
 			} else {
 				parserRes[tempName] = res
 			}
+		}
+		d.TextFsmResults = parserRes
+	} else if d.TextFsmContent != "" {
+		res, err := TextFsmParseViaContent(rawRes, d.TextFsmContent)
+		if err != nil {
+			LogDebug("TextFsm解析失败%v,采集的状态为%s,IP:%s", err, d.SendStatus, d.IP)
+		}
+		LogDebug("解析成功")
+		//是否需要将textfsm转换后的内容解压，默认不解压,(该项用于textfsm模板中只解析一个元素的情况下)
+		if d.UnzipTextFsmResults && len(res) == 1 {
+			for k, v := range res[0] {
+				parserRes[k] = v
+			}
+		} else {
+			parserRes["result"] = res
 		}
 		d.TextFsmResults = parserRes
 	}
@@ -316,7 +332,7 @@ func BulkRunCmd(devices []Device, timeOut int) error {
  * @return  切片包map，key为属性名称，值为任意
  * @author gulilin 2023/9/21 11:41
  */
-func TextFsmParse(brand string, waitToParse string, templateName string) ([]map[string]interface{}, error) {
+func TextFsmParseViaTemplateFile(brand string, waitToParse string, templateName string) ([]map[string]interface{}, error) {
 	if brand == "" {
 		return nil, errors.New("brand为空，无法进行textfsm解析")
 	}
@@ -327,6 +343,31 @@ func TextFsmParse(brand string, waitToParse string, templateName string) ([]map[
 	template := string(content)
 	fsm := gotextfsm.TextFSM{}
 	err = fsm.ParseString(template)
+	if err != nil {
+		fmt.Printf("Error while parsing template '%s'\n", err.Error())
+		return nil, err
+	}
+	parser := gotextfsm.ParserOutput{}
+	err = parser.ParseTextString(waitToParse, fsm, true)
+	if err != nil {
+		fmt.Printf("Error while parsing input '%s'\n", err.Error())
+	}
+	parserDict := parser.Dict
+	if len(parserDict) < 1 {
+		return nil, errors.New("解析结果为空")
+	}
+	return parserDict, nil
+}
+
+/**
+ * 将文本通过textfsm模板解析,通过直接的外参作为模板内容进行解析
+ * @param	waitToParse-待解析的内容，textFmsContent-解析模板内容
+ * @return 	切片包map，key为属性名称，值为任意
+ * @author gulilin 2023/11/9 11:08
+ */
+func TextFsmParseViaContent(waitToParse string, textFmsContent string) ([]map[string]interface{}, error) {
+	fsm := gotextfsm.TextFSM{}
+	err := fsm.ParseString(textFmsContent)
 	if err != nil {
 		fmt.Printf("Error while parsing template '%s'\n", err.Error())
 		return nil, err
