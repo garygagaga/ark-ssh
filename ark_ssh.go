@@ -22,7 +22,7 @@ const (
 	LINUX        = "linux"
 	DIPU         = "dptech"
 	ZTE          = "zte"
-	PROMPT       = `\n<[^!]{1,100}>\s*$|\n\[[^\]]{1,100}\]\s*$|\n[^!\n ]{3,30}[^ \n]#\s*$`
+	PROMPT       = `\n<[^!]{1,100}>\s*$|\n\[[^\]]{1,100}\]\s*$|\n[^!\n ]{3,30}[^ \n]#\s*$|\n\(\S+\)\[[^\]]{1,100}\]\s*$`
 )
 
 var IsLogDebug bool
