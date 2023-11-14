@@ -42,7 +42,7 @@ type Device struct {
 	CreateTime     string `bson:"create_time,omitempty" json:"create_time,omitempty"`
 	LastUpdate     string `bson:"last_update,omitempty" json:"last_update,omitempty"`
 	NotPong        int    `bson:"not_pong,omitempty" json:"not_pong,omitempty"`                 //探测主机22端口连续失败次数
-	ProdTestSimple bool   `bson:"prod_test_simple,omitempty" json:"prod_test_simple,omitempty"` //是否为生产环境测试用例使用设备.
+	ProdTestSimple bool   `bson:"prod_test_simple,omitempty" json:"prod_test_simple,omitempty"` //是否为生产环境测试用例使用设备..
 
 	// 推送命令相关
 	Cmds                     []string               `bson:"cmds,omitempty" json:"cmds,omitempty"`
