@@ -220,14 +220,30 @@ func (d *Device) RunCmdWithBrand(timeOut int) error {
 	d.MapResult = mapRes
 	//如果textfsm字段不为空则将原始的result进行解析
 	parserRes := make(map[string]interface{})
-	if len(d.TextFsmTemplateFilenames) > 0 {
+	//优先看TextFsmContent是否有值，如果有值则忽略下方的TextFsmTemplateFilenames
+	if d.TextFsmContent != "" {
+		res, err := TextFsmParseViaContent(rawRes, d.TextFsmContent)
+		if err != nil {
+			zap.S().Debugf("TextFsm解析失败%v,采集的状态为%s,IP:%s", err, d.SendStatus, d.IP)
+		}
+		zap.S().Debug("解析成功")
+		//是否需要将textfsm转换后的内容解压，默认不解压,(该项用于textfsm模板中只解析一个元素的情况下)
+		if d.UnzipTextFsmResults && len(res) == 1 {
+			for k, v := range res[0] {
+				parserRes[k] = v
+			}
+		} else {
+			parserRes["result"] = res
+		}
+		d.TextFsmResults = parserRes
+	} else if len(d.TextFsmTemplateFilenames) > 0 {
 		for i := range d.TextFsmTemplateFilenames {
 			tempName := d.TextFsmTemplateFilenames[i]
 			res, err := TextFsmParseViaTemplateFile(d.Brand, rawRes, tempName)
 			if err != nil {
-				LogDebug("TextFsm解析失败%v,采集的状态为%s,IP:%s", err, d.SendStatus, d.IP)
+				zap.S().Debugf("TextFsm解析失败%v,采集的状态为%s,IP:%s", err, d.SendStatus, d.IP)
 			}
-			LogDebug("解析成功")
+			zap.S().Debug("解析成功")
 			//是否需要将textfsm转换后的内容解压，默认不解压,(该项用于textfsm模板中只解析一个元素的情况下)
 			if d.UnzipTextFsmResults && len(res) == 1 {
 				for k, v := range res[0] {
@@ -238,22 +254,8 @@ func (d *Device) RunCmdWithBrand(timeOut int) error {
 			}
 		}
 		d.TextFsmResults = parserRes
-	} else if d.TextFsmContent != "" {
-		res, err := TextFsmParseViaContent(rawRes, d.TextFsmContent)
-		if err != nil {
-			LogDebug("TextFsm解析失败%v,采集的状态为%s,IP:%s", err, d.SendStatus, d.IP)
-		}
-		LogDebug("解析成功")
-		//是否需要将textfsm转换后的内容解压，默认不解压,(该项用于textfsm模板中只解析一个元素的情况下)
-		if d.UnzipTextFsmResults && len(res) == 1 {
-			for k, v := range res[0] {
-				parserRes[k] = v
-			}
-		} else {
-			parserRes["result"] = res
-		}
-		d.TextFsmResults = parserRes
 	}
+	
 	return nil
 }
 
