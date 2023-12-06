@@ -190,7 +190,7 @@ func (d *Device) RunCmdWithBrand(timeOut int) error {
 	// 循环命令，依次向管道推送
 	for _, cmd := range d.Cmds {
 		var one OneCMDRes
-		sshSession.WriteChannel(cmd)
+		sshSession.WriteChannel(strings.TrimSpace(cmd)) //去除空白字符
 		ok := false
 		// 单词命令的回显，是否推送成功
 		one.RES, ok = sshSession.ReadChannelTiming(timeOut)
